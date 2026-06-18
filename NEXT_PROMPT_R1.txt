@@ -1,0 +1,1 @@
+有几个问题：1. 文件上传整个功能不可用——/api/files/upload 返回 400 file is not async iterable，图片、文件、语音 50MB 限制全挂。2. 消息已读回执 WS 推送丢失：B 标已读后 A 收不到 message_read 事件，客户端看不到'已读'状态。检查修复一下。

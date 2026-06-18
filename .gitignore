@@ -1,0 +1,17 @@
+node_modules/
+dist/
+uploads/
+*.log
+.DS_Store
+
+# Eval artifacts
+screenshot_*.png
+*_check.html
+*_debug.html
+edge_*.md
+empty.md
+img_test.md
+test_*.js
+test_*.py
+/tmp_*.log
+/tmp_*.txt
