@@ -33,18 +33,19 @@ export class FileService {
   }
 
   async uploadFile(
-    file: NodeJS.ReadableStream & { filename: string; mimetype: string; file?: any },
+    fileStream: NodeJS.ReadableStream,
+    filename: string,
+    mimetype: string,
     userId: string
   ): Promise<UploadResult> {
     const uploadId = uuidv4();
-    const ext = path.extname(file.filename) || '';
+    const ext = path.extname(filename) || '';
     const storedName = `${uploadId}${ext}`;
     const filePath = path.join(this.config.uploadDir, storedName);
     const writeStream = fs.createWriteStream(filePath);
     let uploadedBytes = 0;
-    let totalBytes = 0;
 
-    for await (const chunk of file) {
+    for await (const chunk of fileStream) {
       const buf = typeof chunk === 'string' ? Buffer.from(chunk) : (chunk as Buffer);
       uploadedBytes += buf.length;
       if (uploadedBytes > this.config.maxFileSize) {
@@ -52,12 +53,6 @@ export class FileService {
         fs.promises.unlink(filePath).catch(() => {});
         throw new Error('文件大小超出限制');
       }
-      const progress = totalBytes > 0 ? Math.min(99, Math.round((uploadedBytes / totalBytes) * 100)) : 0;
-      eventBus.emitUploadProgress(userId, {
-        uploadId,
-        progress,
-        filename: file.filename,
-      });
       writeStream.write(buf);
     }
     await new Promise<void>((resolve, reject) => {
@@ -69,7 +64,7 @@ export class FileService {
     const stats = fs.statSync(filePath);
     const finalSize = stats.size;
     let thumbnailUrl: string | undefined;
-    if (IMAGE_MIMETYPES.includes(file.mimetype)) {
+    if (IMAGE_MIMETYPES.includes(mimetype)) {
       try {
         const thumbName = `${uploadId}_thumb${ext}`;
         const thumbPath = path.join(this.config.uploadDir, 'thumbnails', thumbName);
@@ -84,15 +79,15 @@ export class FileService {
     eventBus.emitUploadProgress(userId, {
       uploadId,
       progress: 100,
-      filename: file.filename,
+      filename,
     });
     return {
       id: uploadId,
       filename: storedName,
-      originalName: file.filename,
+      originalName: filename,
       url: `${this.baseUrl}/${storedName}`,
       thumbnailUrl,
-      mimetype: file.mimetype,
+      mimetype,
       size: finalSize,
     };
   }

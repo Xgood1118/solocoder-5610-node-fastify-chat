@@ -95,9 +95,9 @@ export class EventBus {
     this.emitToUser(data.userId, 'message_delivered', msgData);
   }
 
-  emitMessageRead(data: MessageStatusEvent): void {
+  emitMessageRead(data: MessageStatusEvent, targetUserId: string): void {
     const msgData: MessageStatusEvent = { ...data, timestamp: Date.now() };
-    this.emit('message_read', msgData);
+    this.emitToUser(targetUserId, 'message_read', msgData);
   }
 
   emitUserStatusChanged(data: UserStatusEvent): void {

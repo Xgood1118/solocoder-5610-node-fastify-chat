@@ -16,7 +16,13 @@ export async function fileRoutes(fastify: FastifyInstance, opts: { config: Serve
         const uploads: any[] = [];
         for await (const part of parts) {
           if ('file' in part) {
-            const result = await fileService.uploadFile(part as any, userId);
+            const fileStream = part.file as NodeJS.ReadableStream;
+            const result = await fileService.uploadFile(
+              fileStream,
+              part.filename,
+              part.mimetype,
+              userId
+            );
             uploads.push(result);
           }
         }

@@ -122,13 +122,21 @@ export class MessageService {
     const conv = conversationService.getConversation(conversationId);
     conversationService.ensureMember(conv, userId);
     const messageIds = storage.markConversationRead(conversationId, userId);
+    const notifiedSenders = new Set<string>();
     for (const msgId of messageIds) {
-      eventBus.emitMessageRead({
-        messageId: msgId,
-        conversationId,
-        userId,
-        timestamp: Date.now(),
-      });
+      const msg = storage.getMessage(msgId);
+      if (msg && msg.senderId !== userId && !notifiedSenders.has(msg.senderId)) {
+        notifiedSenders.add(msg.senderId);
+        eventBus.emitMessageRead(
+          {
+            messageId: msgId,
+            conversationId,
+            userId,
+            timestamp: Date.now(),
+          },
+          msg.senderId
+        );
+      }
     }
     return messageIds;
   }
@@ -147,13 +155,16 @@ export class MessageService {
         timestamp: Date.now(),
       });
     }
-    if (msg && status === 'read') {
-      eventBus.emitMessageRead({
-        messageId,
-        conversationId: msg.conversationId,
-        userId,
-        timestamp: Date.now(),
-      });
+    if (msg && status === 'read' && msg.senderId !== userId) {
+      eventBus.emitMessageRead(
+        {
+          messageId,
+          conversationId: msg.conversationId,
+          userId,
+          timestamp: Date.now(),
+        },
+        msg.senderId
+      );
     }
     return msg;
   }
